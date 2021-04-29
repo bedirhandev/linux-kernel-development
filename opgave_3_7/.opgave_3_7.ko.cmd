@@ -1,0 +1,1 @@
+cmd_/home/bedirhan/drvo/opgave_3_7/opgave_3_7.ko := ld -r -m elf_x86_64 -z max-page-size=0x200000 -T ./scripts/module-common.lds --build-id  -o /home/bedirhan/drvo/opgave_3_7/opgave_3_7.ko /home/bedirhan/drvo/opgave_3_7/opgave_3_7.o /home/bedirhan/drvo/opgave_3_7/opgave_3_7.mod.o ;  true

@@ -1,0 +1,8 @@
+/usr/bin/make -C /lib/modules/4.15.0-142-generic/build M=/home/bedirhan/drvo/opgave_3_3 modules
+make[1]: Entering directory '/usr/src/linux-headers-4.15.0-142-generic'
+  CC [M]  /home/bedirhan/drvo/opgave_3_3/opgave_3_3.o
+  Building modules, stage 2.
+  MODPOST 1 modules
+  CC      /home/bedirhan/drvo/opgave_3_3/opgave_3_3.mod.o
+  LD [M]  /home/bedirhan/drvo/opgave_3_3/opgave_3_3.ko
+make[1]: Leaving directory '/usr/src/linux-headers-4.15.0-142-generic'

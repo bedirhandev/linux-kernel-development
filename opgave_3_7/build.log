@@ -1,0 +1,5 @@
+/usr/bin/make -C /lib/modules/4.15.0-142-generic/build M=/home/bedirhan/drvo/opgave_3_3 clean
+make[1]: Entering directory '/usr/src/linux-headers-4.15.0-142-generic'
+  CLEAN   /home/bedirhan/drvo/opgave_3_3/.tmp_versions
+  CLEAN   /home/bedirhan/drvo/opgave_3_3/Module.symvers
+make[1]: Leaving directory '/usr/src/linux-headers-4.15.0-142-generic'
