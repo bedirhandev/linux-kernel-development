@@ -1,0 +1,45 @@
+{
+    "configurations": [
+    {
+      "name": "Linux",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "/usr/lib/gcc/x86_64-linux-gnu/7.5.0/include",
+        "/lib/modules/4.15.0-142-generic/build/arch/x86/include",
+        "/lib/modules/4.15.0-142-generic/build/arch/x86/include/generated",
+        "/lib/modules/4.15.0-142-generic/build/include",
+        "/lib/modules/4.15.0-142-generic/build/arch/x86/include/uapi",
+        "/lib/modules/4.15.0-142-generic/build/arch/x86/include/generated/uapi",
+        "/lib/modules/4.15.0-142-generic/build/include/uapi",
+        "/lib/modules/4.15.0-142-generic/build/include/generated/uapi"
+      ],
+      "forcedInclude": [
+        "/usr/src/linux-headers-4.15.0-142-generic/include/linux/compiler_types.h",
+        "/usr/src/linux-headers-4.15.0-142-generic/include/linux/kconfig.h"
+      ],
+      "defines": [
+        "__KERNEL__",
+        "CONFIG_X86_X32_ABI",
+        "CONFIG_AS_CFI=1",
+        "CONFIG_AS_CFI_SIGNAL_FRAME=1",
+        "CONFIG_AS_CFI_SECTIONS=1",
+        "CONFIG_AS_SSSE3=1",
+        "CONFIG_AS_AVX=1",
+        "CONFIG_AS_AVX2=1",
+        "CONFIG_AS_AVX512=1",
+        "CONFIG_AS_SHA1_NI=1",
+        "CONFIG_AS_SHA256_NI=1",
+        "CC_USING_FENTRY",
+        "MODULE"
+      ],
+      "compilerPath": "/usr/bin/gcc",
+      "compilerArgs": [
+        "-nostdinc",
+        "-m64"
+      ],
+      "cStandard": "c11",
+      "intelliSenseMode": "${default}"
+    }
+  ],
+  "version": 4
+}
