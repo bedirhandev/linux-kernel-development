@@ -15,6 +15,14 @@ static ssize_t hello_write(struct file *file, const char __user *buf, size_t lbu
 static int hello_open(struct inode *inode, struct file *file);
 static int hello_release(struct inode *inode, struct file *file);
 
+#define MY_MAJOR  243
+#define MY_MINOR  0
+#define MY_VERSION 7
+#define MY_COUNT 2
+#define MY_NAME "opgave_4_3"
+#define MY_SIZE 256
+#define MY_DEVICE_NUMBER MKDEV(MY_MAJOR, MY_MINOR)
+
 struct mem_dev
 {
 	char* data;
@@ -22,18 +30,11 @@ struct mem_dev
 };
 
 struct mem_dev *mem_devp;
-static struct cdev *device;
-//static int buffer_size = 256;
-//static char buffer[256] = {0};
+static struct cdev device[MY_COUNT];
+static struct class *device_class = NULL;
+static int buffer_size = 256;
+static char buffer[256] = {0};
 static int count = 0;
-
-#define MY_MAJOR  243
-#define MY_MINOR  0
-#define MY_VERSION 7
-#define MY_COUNT 1
-#define MY_NAME "opgave_4_3"
-#define MY_SIZE 256
-#define MY_DEVICE_NUMBER MKDEV(MY_MAJOR, MY_MINOR)
 
 struct file_operations fops = {
 	.owner = THIS_MODULE,
@@ -49,7 +50,7 @@ static ssize_t hello_read(struct file *file, char __user *buf, size_t lbuf, loff
 	printk(KERN_INFO "ppos %lld lbuf %ld buffer_size %d \n", *ppos, lbuf, MY_SIZE);
 	//printk(KERN_INFO "%p", *file->private_data);
 
-	struct mem_dev *dev = file->private_data;
+	//struct mem_dev *dev = file->private_data;
 
 	if(*ppos >= MY_SIZE) 
 	{
@@ -63,7 +64,7 @@ static ssize_t hello_read(struct file *file, char __user *buf, size_t lbuf, loff
 		lbuf = MY_SIZE - (*ppos);
 	}
 
-	if(copy_to_user(buf, (void*)(dev->data + *ppos), lbuf) != 0) 
+	if(copy_to_user(buf, buffer + *ppos, lbuf) != 0) 
 	{
 		return -EIO;
 	}
@@ -77,7 +78,7 @@ static ssize_t hello_write(struct file *file, const char __user *buf, size_t lbu
 	printk(KERN_ALERT "hello_write()\n");
 	printk(KERN_INFO "ppos %lld lbuf %ld buffer_size %d \n", *ppos, lbuf, MY_SIZE);
 
-	struct mem_dev *dev = file->private_data;
+	//struct mem_dev *dev = file->private_data;
 
 	if(*ppos >= MY_SIZE)
 	{
@@ -92,7 +93,7 @@ static ssize_t hello_write(struct file *file, const char __user *buf, size_t lbu
 	}
 
 	/* copy data to buffer */
-	if(copy_from_user(dev->data + *ppos, buf, lbuf) != 0) 
+	if(copy_from_user(buffer + *ppos, buf, lbuf) != 0) 
 	{
 		return -EFAULT;
 	}
@@ -130,24 +131,25 @@ static int hello_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
+static int hello_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	add_uevent_var(env, "DEVMODE=%#o", 0666);
+    return 0;
+}
+
 static int hello_init(void)
 {
 	int i = 0;
 	int err;
 
-	device = cdev_alloc();
-	device->owner = THIS_MODULE;
-
-	register_chrdev_region(MY_DEVICE_NUMBER, MY_COUNT, MY_NAME);
-	cdev_init(device, &fops);
-	err = cdev_add(device, MY_DEVICE_NUMBER, MY_COUNT);
+	err = register_chrdev_region(MY_DEVICE_NUMBER, MY_COUNT, MY_NAME);
 
 	printk(KERN_ALERT "hello_init()\n");
 
 	// -- check error of adding char device
 	if (err < 0)
 	{
-		printk("hello_init() - driver (ver. %d) MY_MAJOR %d is not added.\n", MY_VERSION, MY_MAJOR);
+		printk(KERN_INFO "hello_init() - driver (ver. %d) MY_MAJOR %d is not added.\n", MY_VERSION, MY_MAJOR);
 		return -1;
 	} else {
 		printk("hello_init() - driver (ver. %d) MY_MAJOR %d is added.\n", MY_VERSION, MY_MAJOR);
@@ -161,11 +163,27 @@ static int hello_init(void)
 
 		memset(mem_devp, 0, sizeof(struct mem_dev));
 
+		device_class = class_create(THIS_MODULE, MY_NAME);
+		device_class->dev_uevent = hello_uevent;
+
 		for(i = 0; i < MY_COUNT; i++)
 		{
+			//device[i] = cdev_alloc();
+			//device[i].owner = THIS_MODULE;
+
+			cdev_init(&device[i], &fops);
+			device[i].owner = THIS_MODULE;
+
+			err = cdev_add(&device[i], MKDEV(MY_MAJOR, i), 1); //MY_COUNT (3)
+			if(err)
+			{
+				printk(KERN_INFO "WARNING");
+			}
 			mem_devp[i].size = MY_SIZE;
 			mem_devp[i].data = kvmalloc(MY_SIZE, GFP_KERNEL);
 			memset(mem_devp[i].data, 0, MY_SIZE);
+
+			device_create(device_class, NULL, MKDEV(MY_MAJOR, i), NULL, "mychardev-%d", i);
 		}
 	}
 
@@ -174,10 +192,20 @@ static int hello_init(void)
 
 static void hello_exit(void)
 {
+	int i = 0;
 	printk(KERN_ALERT "hello_exit()\n");
 	printk(KERN_ALERT "hello_exit() - driver (ver. %d) MY_MAJOR %d is removed.\n", MY_VERSION, MY_MAJOR);
-	unregister_chrdev_region(MKDEV(MY_MAJOR, MY_MINOR), 1);
-	cdev_del(device);
+	
+	for(i = 0; i < MY_COUNT; i++)
+	{
+		device_destroy(device_class, MKDEV(MY_MAJOR, i));
+		//cdev_del(&device[i]);
+	}
+
+	class_unregister(device_class);
+	class_destroy(device_class);
+	
+	unregister_chrdev_region(MKDEV(MY_MAJOR, 0), MY_COUNT);
 	kvfree(mem_devp);
 }
 
