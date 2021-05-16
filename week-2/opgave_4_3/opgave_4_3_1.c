@@ -64,7 +64,7 @@ static ssize_t hello_read(struct file *file, char __user *buf, size_t lbuf, loff
 		lbuf = MY_SIZE - (*ppos);
 	}
 
-	if(copy_to_user(buf, (void*)(dev->data + *ppos, lbuf) != 0) 
+	if(copy_to_user(buf, (void*)(dev->data + *ppos), lbuf) != 0) 
 	{
 		return -EIO;
 	}

@@ -1,8 +1,8 @@
 KDIR = /lib/modules/$(shell uname -r)/build
 PWD  = $(shell pwd)
 MAKE = /usr/bin/make
-obj-m += opgave_4_3_0.o
-device_name = opgave_4_3_0
+obj-m += opgave_4_3_1.o
+device_name = opgave_4_3_1
 major_number = 243
 
 %.ko : %.c
