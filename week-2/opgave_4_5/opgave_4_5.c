@@ -27,6 +27,9 @@ static ssize_t mem_write(struct file *file, const char __user *buf, size_t lbuf,
 static int mem_open(struct inode *inode, struct file *file);
 static int mem_release(struct inode *inode, struct file *file);
 
+#define MESSAGE_SEQ_NO 0x01
+#define MEM_MESSAGE _IO('M',MESSAGE_SEQ_NO)
+
  /* file open function */
 int mem_open(struct inode *inode, struct file *filp)
 {
@@ -130,7 +133,14 @@ loff_t mem_llseek(struct file *filp, loff_t off, int whence){
 }
  
 long mem_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long args){
-    printk(KERN_ALERT "Entered: unlocked_ioctl()");
+    printk(KERN_INFO "Entered: unlocked_ioctl()");
+	switch(cmd) {
+		case MEM_MESSAGE:
+			printk(KERN_INFO "Hello, from mem_unlocked_ioctrl().");
+			break;
+		default:
+			return -ENOTTY;
+	}
     return 0;
 }
 
