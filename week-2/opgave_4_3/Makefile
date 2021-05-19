@@ -1,8 +1,8 @@
 KDIR = /lib/modules/$(shell uname -r)/build
 PWD  = $(shell pwd)
 MAKE = /usr/bin/make
-obj-m += opgave_4_3_3.o
-device_name = opgave_4_3_3
+obj-m += opgave_4_3.o
+device_name = opgave_4_3
 
 %.ko : %.c
 	$(MAKE) -C $(KDIR) M=$(PWD) modules

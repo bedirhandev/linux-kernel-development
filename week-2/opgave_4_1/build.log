@@ -1,39 +1,6 @@
-1. Het werkt. Zie de bestanden: test.c en opgave_4_1.c
-
-sudo ./test /dev/opgave_4_1 "hallo wereld"
-Opening /dev/opgave_4_1
-Writing hallo wereld
-Succesfully writing 12 bytes.
-Closing /dev/opgave_4_1
-Successfully closed /dev/opgave_4_1
-Opening /dev/opgave_4_1
-Reading hallo wereld
-Succesfully reading 12 bytes.
-Closing /dev/opgave_4_1
-Successfully closed /dev/opgave_4_1
-
-dmesg | tail -20
-[26560.502733] hello_open(). Open count: 1
-[26560.502745] hello_write()
-[26560.502748] ppos 0 lbuf 5 buffer_size 256 
-[26560.502751] hello_release()
-[26560.504590] hello_open(). Open count: 2
-[26560.504602] hello_read()
-[26560.504605] ppos 0 lbuf 131072 buffer_size 256 
-[26560.504606] The number of bytes read can't go beyond the file size.
-[26560.504656] hello_read()
-[26560.504659] ppos 256 lbuf 131072 buffer_size 256 
-[26560.504675] hello_release()
-[26931.450680] hello_open(). Open count: 3
-[26931.450702] hello_write()
-[26931.450704] ppos 0 lbuf 12 buffer_size 256 
-[26931.450707] hello_release()
-[26931.450716] hello_open(). Open count: 4
-[26931.450721] hello_read()
-[26931.450723] ppos 0 lbuf 4096 buffer_size 256 
-[26931.450724] The number of bytes read can't go beyond the file size.
-[26931.450729] hello_release()
-
-2. Ik zie meerdere read verzoeken bij een write operatie. Dat komt omdat lbuf (de grootte van de user buffer) gigantisch groot wordt en daardoor een extra operatie nodig heeft om te checken of er nog gelezen moet worden uit de user buffer. Ik heb dit opgelost door aan het begin een check te doen of de pointer aan het eind is gekomen van de buffer. Zo ja, dan stopt die voordat die weer een read of write operatie uitvoert.
-3. Bij het meerdere keren schrijven gebeurt er niks dat me opvalt. Misschien dat de buffer overflowed?
-4. Bij het meerdere kereen lezen gebeurt er ook niks dat me opvalt.
+make clean
+make opgave_4_1.ko
+make install
+cat < /dev/mychardev-0
+[ 4066.667410] Driver succesfully initialized.
+[ 4072.767308] Device opened sucessfully. Open count: 1

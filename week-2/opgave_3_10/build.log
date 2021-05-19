@@ -1,0 +1,20 @@
+make clean
+make opgave_3_10.ko
+make install
+ls /dev/devices
+zie voor "mychardev-0" en "mychardev-1" (twee node devices aangemaakt)
+make uninstall
+ls /sys/class
+zie voor "memdev-class"
+cat < /sys/class/memdev-class/mychardev-0/uevent
+UITKOMST
+-------------------------------------------------
+MAJOR=243
+MINOR=0
+DEVNAME=mychardev-0
+DEVMODE=0666
+-------------------------------------------------
+MAJOR=243
+MINOR=1
+DEVNAME=mychardev-1
+DEVMODE=0666

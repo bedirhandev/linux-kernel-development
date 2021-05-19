@@ -13,8 +13,6 @@ clean:
 
 install:
 	sudo insmod $(device_name).ko
-	sudo mknod /dev/$(device_name) c ${major_number} 0
 
 uninstall:
 	sudo rmmod $(device_name)
-	sudo rm /dev/$(device_name)

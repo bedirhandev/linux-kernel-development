@@ -1,0 +1,6 @@
+make clean
+make opgave_3_9.ko
+make install
+cat < /proc/devices
+zie memdev character device die dynamisch is gezet
+vervolgens make uninstall

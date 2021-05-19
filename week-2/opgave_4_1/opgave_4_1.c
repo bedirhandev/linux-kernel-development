@@ -1,3 +1,6 @@
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/fs.h>
@@ -6,132 +9,172 @@
 #include <linux/uaccess.h>
 #include <linux/kernel.h> // Contains types, macros, functions for the kernel
 
-MODULE_LICENSE("Dual BSD/GPL");
-MODULE_AUTHOR("Bedirhan Dincer");
+#define MEMDEV_MAJOR 243 /*The default mem number of the mem*/
+#define MEMDEV_NR_DEVS 2 /*Number of devices*/
+#define MEMDEV_SIZE 256
+#define MEMDEV_NAME "memdev"
+#define MEMDEV_CLASS "memdev-class"
 
-static ssize_t hello_read(struct file *file, char __user *buf, size_t lbuf, loff_t *ppos);
-static ssize_t hello_write(struct file *file, const char __user *buf, size_t lbuf, loff_t *ppos);
-static int hello_open(struct inode *inode, struct file *file);
-static int hello_release(struct inode *inode, struct file *file);
-
-static struct cdev *device;
+static int mem_major = MEMDEV_MAJOR;
+static int count = 0;
+struct cdev cdev;
+static struct class *device_class = NULL;
 static int buffer_size = 256;
 static char buffer[256] = {0};
-static int count = 0;
 
-#define MY_MAJOR  243
-#define MY_MINOR  0
-#define MY_VERSION 7
-#define MY_COUNT 1
-#define MY_NAME "opgave_4_1"
-#define MY_DEVICE_NUMBER MKDEV(MY_MAJOR, MY_MINOR)
+module_param(mem_major, int, S_IRUGO);
+ 
+static ssize_t mem_read(struct file *file, char __user *buf, size_t lbuf, loff_t *ppos);
+static ssize_t mem_write(struct file *file, const char __user *buf, size_t lbuf, loff_t *ppos);
+static int mem_open(struct inode *inode, struct file *file);
+static int mem_release(struct inode *inode, struct file *file);
 
-struct file_operations fops = {
-	.owner = THIS_MODULE,
-	.read = hello_read,
-	.write = hello_write,
-	.open = hello_open,
-	.release = hello_release,
-};
-
-static ssize_t hello_read(struct file *file, char __user *buf, size_t lbuf, loff_t *ppos)
+ /* file open function */
+int mem_open(struct inode *inode, struct file *filp)
 {
-	printk(KERN_ALERT "hello_read()\n");
-	printk(KERN_INFO "ppos %lld lbuf %ld buffer_size %d \n", *ppos, lbuf, buffer_size);
-
-	if(*ppos >= buffer_size) 
-	{
-		return 0;
-	}
-
-	if(*ppos + lbuf > buffer_size)
-	{
-		// error
-		printk(KERN_INFO "The number of bytes read can't go beyond the file size.\n");
-		lbuf = buffer_size - (*ppos);
-	}
-
-	if(copy_to_user(buf, buffer + *ppos, lbuf) != 0) 
-	{
-		return -EIO;
-	}
-
-	*ppos += lbuf;
-	return lbuf;
+	count++;
+	printk(KERN_ALERT "Device opened sucessfully. Open count: %d\n", count);
+    
+    return 0;
 }
-
-static ssize_t hello_write(struct file *file, const char __user *buf, size_t lbuf, loff_t *ppos)
+ 
+ /* file release function */
+int mem_release(struct inode *inode, struct file *filp)
 {
-	printk(KERN_ALERT "hello_write()\n");
-	printk(KERN_INFO "ppos %lld lbuf %ld buffer_size %d \n", *ppos, lbuf, buffer_size);
+	printk(KERN_INFO "Device closed sucessfully.");
+	return 0;
+}
+ 
+static ssize_t mem_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
+{
+	int result = 0;
+	int bytes_read = 0;
 
-	if(*ppos >= buffer_size)
+	if(*ppos + size > buffer_size)
 	{
-		return -EINVAL;
+		size = buffer_size - (*ppos);
 	}
 
-	if(*ppos + lbuf > buffer_size)
+	result = copy_to_user(buf, buffer + *ppos, size);
+	bytes_read = size - result;
+
+	*ppos += bytes_read;
+	return bytes_read;
+}
+ 
+ /*Write function*/
+static ssize_t mem_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
+{
+	int result = 0;
+	int bytes_written = 0;
+
+	printk(KERN_ALERT "%s", buf);
+
+	if(*ppos + size > buffer_size)
 	{
 		// error
-		printk(KERN_ALERT "The number of bytes to write is too large.\n");
-		lbuf = buffer_size - (*ppos);
+		printk(KERN_ALERT "Buffer overflow\n");
 	}
 
 	/* copy data to buffer */
-	if(copy_from_user(buffer + *ppos, buf, lbuf) != 0) 
+	result = copy_from_user(buffer + *ppos, buf, size);
+	bytes_written = size - result;
+	*ppos += bytes_written;
+	
+	printk(KERN_ALERT "mem_write()\n");
+	return bytes_written;
+}
+
+ /* file operation structure */
+static const struct file_operations mem_fops =
+{
+  .owner = THIS_MODULE,
+  .read = mem_read,
+  .write = mem_write,
+  .open = mem_open,
+  .release = mem_release
+};
+
+static int hello_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	add_uevent_var(env, "DEVMODE=%#o", 0666);
+    return 0;
+}
+ 
+static int memdev_init(void)
+{
+	dev_t curr_dev;
+	int result;
+	int i;
+
+	dev_t devno = MKDEV(mem_major, 0);
+
+	/* Static application device number*/
+	if (mem_major) {
+		printk(KERN_INFO "Statically assigned with device number: %d.", mem_major);
+		result = register_chrdev_region(devno, 2, MEMDEV_NAME);
+	}
+	else /* dynamically assigns the device number */
 	{
-		return -EFAULT;
+		result = alloc_chrdev_region(&devno, 0, 2, MEMDEV_NAME);
+		mem_major = MAJOR(devno);
+		printk(KERN_INFO "Dynamically assigned with device number: %d.", mem_major);
 	}
 
-	*ppos += lbuf;
-	return lbuf;
-}
-
-static int hello_open(struct inode *inode, struct file *file)
-{
-	count++;
-	printk(KERN_ALERT "hello_open(). Open count: %d\n", count);
-	return 0;
-}
-
-static int hello_release(struct inode *inode, struct file *file)
-{
-	printk(KERN_ALERT "hello_release()\n");
-	return 0;
-}
-
-static int hello_init(void)
-{
-	int err;
-
-	device = cdev_alloc();
-	device->owner = THIS_MODULE;
-
-	register_chrdev_region(MY_DEVICE_NUMBER, MY_COUNT, MY_NAME);
-	cdev_init(device, &fops);
-	err = cdev_add(device, MY_DEVICE_NUMBER, MY_COUNT);
-
-	printk(KERN_ALERT "hello_init()\n");
-
-	// -- check error of adding char device
-	if (err < 0)
-	{
-		printk("hello_init() - driver (ver. %d) MY_MAJOR %d is added.\n", MY_VERSION, MY_MAJOR);
-		return -1;
-	} else {
-		printk("hello_init() - driver (ver. %d) MY_MAJOR %d is added.\n", MY_VERSION, MY_MAJOR);
+	if (result < 0) {
+		printk(KERN_ALERT "Something wrong happened.");
+		return result;
 	}
 
+	device_class = class_create(THIS_MODULE, MEMDEV_CLASS);
+	device_class->dev_uevent = hello_uevent;
+
+	printk(KERN_INFO "Registering character device.");
+
+	/* Initialize the cdev structure */
+	cdev_init(&cdev, &mem_fops);//Connect cdev to mem_fops
+	cdev.owner = THIS_MODULE; //owner member indicates who owns this driver, so that "kernel reference module count" is incremented by 1; THIS_MODULE indicates that this module is now used by the kernel, which is a kernel-defined macro
+	cdev.ops = &mem_fops;
+
+	curr_dev = MKDEV(MAJOR(devno), MINOR(devno));
+	cdev_add(&cdev, curr_dev, MEMDEV_NR_DEVS);
+
+	printk(KERN_INFO "Character device succesfully registered.");
+
+	for (i = 0; i < MEMDEV_NR_DEVS; i++) 
+	{
+		printk(KERN_INFO "Device node: %d is being created.", i);
+		curr_dev = MKDEV(MAJOR(devno), MINOR(devno) + i);
+		device_create(device_class, NULL, curr_dev, NULL, "mychardev-%d", i);
+		printk(KERN_INFO "Device node: %d is succesfully created.", i);
+	}
+
+	printk(KERN_INFO "Driver succesfully initialized.");
+	printk(KERN_INFO "Driver succesfully initialized.");
+
 	return 0;
 }
-
-static void hello_exit(void)
+ 
+ /* module unload function */
+static void memdev_exit(void)
 {
-	printk(KERN_ALERT "hello_exit()\n");
-	printk(KERN_ALERT "hello_exit() - driver (ver. %d) MY_MAJOR %d is removed.\n", MY_VERSION, MY_MAJOR);
-	unregister_chrdev_region(MKDEV(MY_MAJOR, MY_MINOR), 1);
-	cdev_del(device);
-}
+	int i = 0;
 
-module_init(hello_init);
-module_exit(hello_exit);
+	for(i = 0; i < MEMDEV_NR_DEVS; i++)
+	{
+		device_destroy(device_class, MKDEV(mem_major, i));
+	}
+
+	class_unregister(device_class);
+	class_destroy(device_class);
+
+	cdev_del(&cdev); /*Logout device*/
+	unregister_chrdev_region(MKDEV(mem_major, 0), 2); /*release device number*/
+	printk(KERN_INFO "Driver succesfully destroyed.");
+}
+ 
+MODULE_LICENSE("Dual BSD/GPL");
+MODULE_AUTHOR("Bedirhan Dincer");
+
+module_init(memdev_init);
+module_exit(memdev_exit);
