@@ -129,6 +129,11 @@ loff_t mem_llseek(struct file *filp, loff_t off, int whence){
     return newpos;
 }
  
+long mem_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long args){
+    printk(KERN_ALERT "Entered: unlocked_ioctl()");
+    return 0;
+}
+
  /* file operation structure */
 static const struct file_operations mem_fops =
 {
@@ -138,6 +143,7 @@ static const struct file_operations mem_fops =
   .open = mem_open,
   .release = mem_release,
   .llseek = mem_llseek,
+  .unlocked_ioctl = mem_unlocked_ioctl
 };
 
 static int hello_uevent(struct device *dev, struct kobj_uevent_env *env)
@@ -180,7 +186,7 @@ static int memdev_init(void)
 	cdev_init(&cdev, &mem_fops);//Connect cdev to mem_fops
 	cdev.owner = THIS_MODULE; //owner member indicates who owns this driver, so that "kernel reference module count" is incremented by 1; THIS_MODULE indicates that this module is now used by the kernel, which is a kernel-defined macro
 	cdev.ops = &mem_fops;
-\
+
 	curr_dev = MKDEV(MAJOR(devno), MINOR(devno));
 	cdev_add(&cdev, curr_dev, MEMDEV_NR_DEVS);
 
