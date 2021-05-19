@@ -1,39 +1,21 @@
-1. Het werkt. Zie de bestanden: test.c en opgave_4_1.c
+make clean
+make opgave_5_1.ko
+make install
+gcc test.c -o test
 
-sudo ./test /dev/opgave_4_1 "hallo wereld"
-Opening /dev/opgave_4_1
-Writing hallo wereld
-Succesfully writing 12 bytes.
-Closing /dev/opgave_4_1
-Successfully closed /dev/opgave_4_1
-Opening /dev/opgave_4_1
-Reading hallo wereld
-Succesfully reading 12 bytes.
-Closing /dev/opgave_4_1
-Successfully closed /dev/opgave_4_1
+cat < /proc/interrupts
+ 19:      15823       6876   IO-APIC   19-fasteoi   ens33, my_interrupt
 
-dmesg | tail -20
-[26560.502733] hello_open(). Open count: 1
-[26560.502745] hello_write()
-[26560.502748] ppos 0 lbuf 5 buffer_size 256 
-[26560.502751] hello_release()
-[26560.504590] hello_open(). Open count: 2
-[26560.504602] hello_read()
-[26560.504605] ppos 0 lbuf 131072 buffer_size 256 
-[26560.504606] The number of bytes read can't go beyond the file size.
-[26560.504656] hello_read()
-[26560.504659] ppos 256 lbuf 131072 buffer_size 256 
-[26560.504675] hello_release()
-[26931.450680] hello_open(). Open count: 3
-[26931.450702] hello_write()
-[26931.450704] ppos 0 lbuf 12 buffer_size 256 
-[26931.450707] hello_release()
-[26931.450716] hello_open(). Open count: 4
-[26931.450721] hello_read()
-[26931.450723] ppos 0 lbuf 4096 buffer_size 256 
-[26931.450724] The number of bytes read can't go beyond the file size.
-[26931.450729] hello_release()
+dmesg | tail -10
+[ 6171.617355] In the ISR: counter = 17
+[ 6172.578476] In the ISR: counter = 18
+[ 6174.592576] In the ISR: counter = 19
+[ 6175.712662] In the ISR: counter = 20
+[ 6176.609144] In the ISR: counter = 21
+[ 6178.625340] In the ISR: counter = 22
+[ 6180.639649] In the ISR: counter = 23
+[ 6182.656974] In the ISR: counter = 24
+[ 6184.672664] In the ISR: counter = 25
+[ 6186.702014] In the ISR: counter = 26
 
-2. Ik zie meerdere read verzoeken bij een write operatie. Dat komt omdat lbuf (de grootte van de user buffer) gigantisch groot wordt en daardoor een extra operatie nodig heeft om te checken of er nog gelezen moet worden uit de user buffer. Ik heb dit opgelost door aan het begin een check te doen of de pointer aan het eind is gekomen van de buffer. Zo ja, dan stopt die voordat die weer een read of write operatie uitvoert.
-3. Bij het meerdere keren schrijven gebeurt er niks dat me opvalt. Misschien dat de buffer overflowed?
-4. Bij het meerdere kereen lezen gebeurt er ook niks dat me opvalt.
+make uninstall
