@@ -14,18 +14,9 @@
 #define MEMDEV_SIZE 256
 #define MEMDEV_NAME "memdev"
 #define MEMDEV_CLASS "memdev-class"
-static char* buffer;
-
-/*mem device description structure*/
-struct mem_dev                                     
-{                                                        
-  char *data;                      
-  unsigned long size;       
-};
 
 static int mem_major = MEMDEV_MAJOR;
 static int count = 0;
-struct mem_dev *mem_devp; /* device structure pointer */
 struct cdev cdev;
 static struct class *device_class = NULL;
 
@@ -39,20 +30,8 @@ static int mem_release(struct inode *inode, struct file *file);
  /* file open function */
 int mem_open(struct inode *inode, struct file *filp)
 {
-    //struct mem_dev *dev;
-
-	//mem_devp = kvmalloc(MEMDEV_SIZE * sizeof(struct mem_dev), GFP_KERNEL);
-	//memset(mem_devp, 0, sizeof(struct mem_dev));
-
-	//mem_devp->size = MEMDEV_SIZE;
-	//mem_devp->data = kvmalloc(MEMDEV_SIZE, GFP_KERNEL);//The assigned address exists here
-	//memset(mem_devp->data, 0, MEMDEV_SIZE);
-    
-    //dev = mem_devp;
-	/* Assign the device description structure pointer to the file private data pointer */ 
-	filp->private_data = kvmalloc(MEMDEV_SIZE, GFP_KERNEL);//dev; //convenient to use the pointer later
+	filp->private_data = kvmalloc(MEMDEV_SIZE, GFP_KERNEL);
 	memset(filp->private_data, 0, MEMDEV_SIZE);
-
 	count++;
 
 	printk(KERN_ALERT "Device opened sucessfully. Open count: %d\n", count);
@@ -63,7 +42,7 @@ int mem_open(struct inode *inode, struct file *filp)
  /* file release function */
 int mem_release(struct inode *inode, struct file *filp)
 {
-	//kvfree(filp->private_data);
+	kvfree(filp->private_data);
 	printk(KERN_INFO "Device closed sucessfully.");
 	return 0;
 }
@@ -78,17 +57,7 @@ static ssize_t mem_read(struct file *filp, char __user *buf, size_t size, loff_t
 
 	/* Determine if the read position is valid*/
 	if (p >= MEMDEV_SIZE) return 0; //Out of reading range, returning 0 means no data can be read
-	
-	//printk(KERN_INFO "%s", (dev->data + p));
-
 	if (count > MEMDEV_SIZE - p) count = MEMDEV_SIZE - p;
-
-	//char* buffer = filp->private_data;
-	//printk(KERN_INFO "Content: %s\n", (char*)filp->private_data);
-	/*char *t;
-	for (t = (char*)filp->private_data; *t != '\0'; t++) {
-		printk(KERN_INFO "Content: %c\n", *t);
-	}*/
 
 	//Read data to user space*/
 	if (copy_to_user(buf, filp->private_data + p, count) != 0)
@@ -117,8 +86,6 @@ static ssize_t mem_write(struct file *filp, const char __user *buf, size_t size,
 	/* Analyze and get a valid write length*/
 	if (p >= MEMDEV_SIZE) return 0;
 	if (count > MEMDEV_SIZE - p) count = MEMDEV_SIZE - p;
-
-	//printk(KERN_INFO "Content: %p", (filp->private_data + p));
 
 	/*Write data from user space*/
 	if (copy_from_user(filp->private_data + p, buf, count) != 0)
@@ -213,14 +180,12 @@ static int memdev_init(void)
 	cdev_init(&cdev, &mem_fops);//Connect cdev to mem_fops
 	cdev.owner = THIS_MODULE; //owner member indicates who owns this driver, so that "kernel reference module count" is incremented by 1; THIS_MODULE indicates that this module is now used by the kernel, which is a kernel-defined macro
 	cdev.ops = &mem_fops;
-
-	/* Registered character device */
+\
 	curr_dev = MKDEV(MAJOR(devno), MINOR(devno));
 	cdev_add(&cdev, curr_dev, MEMDEV_NR_DEVS);
 
 	printk(KERN_INFO "Character device succesfully registered.");
 
-	/* allocate memory for the device */
 	for (i = 0; i < MEMDEV_NR_DEVS; i++) 
 	{
 		printk(KERN_INFO "Device node: %d is being created.", i);
