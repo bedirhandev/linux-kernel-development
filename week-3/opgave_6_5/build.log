@@ -1,0 +1,9 @@
+[Op de host]
+make clean
+make opgave_6_5.ko
+sudo rsync -avz ssh /home/bedirhan/linux-kernel-development/week-3/opgave_6_5 bedirhan@192.168.7.2:/home/bedirhan/opgave_6_5
+
+[Op de target]
+make install
+echo 1 > /dev/mychardev-0
+dmesg | tail -30

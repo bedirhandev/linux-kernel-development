@@ -1,0 +1,11 @@
+[Op de host]
+make clean
+make opgave_4_2.ko
+sudo rsync -avz ssh /home/bedirhan/linux-kernel-development/week-3/opgave_6_3/ bedirhan@192.168.7.2:/home/bedirhan/dev/
+
+[Op de target]
+make install
+dmesg | tail -8
+lsmod
+
+ps: zie screenshots voor meer info

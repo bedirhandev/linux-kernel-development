@@ -1,0 +1,9 @@
+[Op de host]
+ssh debian@192.168.7.2 -> to connect with the BBB trough ethernet cable
+
+[Op de target]
+username: debian
+pass: temppwd
+sudo adduser bedirhan
+usermod -aG sudo bedirhan
+su - bedirhan
