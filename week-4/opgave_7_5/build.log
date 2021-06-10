@@ -1,0 +1,31 @@
+[On host device]
+Added te following piece of code to the output.dts file.
+led_extern {
+	compatible="gpio-extern";
+	label = "mijn groene ledje";
+	gpios = <&gpio1 19 GPIO_ACTIVE_HIGH>;
+};
+
+In my case since it is all in hexadecimal it becomes:
+led_extern {
+	compatible="gpio-extern";
+	label = "mijn groene ledje";
+	gpios = <0x5a 0x13 0x0>;
+};
+
+compile the dts to a dtb:
+Execute the command: `~/linux/scripts/dtc/dtc -I dts -O dtb -o am335x-boneblack-uboot-univ.dtb output.dts`
+
+make clean
+make led_extern.ko
+file upload of [am335x-boneblack-uboot-univ.dtb, led_extern.ko, Makfile] to the BBB all to their proper location.
+
+[On the target device]
+Go to the directory of the transferred files.
+Execute the commands: `make install`, `make uninstall`.
+
+Results in:
+[ 7913.136341] gpio_ex_probe(led_extern)
+[ 7913.136810] gpio_ex_init() succesful
+[ 7966.987861] gpio_ex_exit()
+[ 7966.987942] gpio_ex_remove(led_extern)

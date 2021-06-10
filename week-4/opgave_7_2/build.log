@@ -1,0 +1,15 @@
+After finding out the device tree I was in need of the include hierarchy of the device tree. Instead of checking the dts file of the device tree and locate all includes hand by hand.
+I have decompiled the device tree into one single file. This output dts file is a compilation of all the include files, the downside is that all hardware adresses, references and numbers etc
+in the file are converted to hexadecimal.
+
+The device tree blob that I am using to get the source file is directly from the BBB.
+The path to it is /boot/dtbs/4.19.94-ti-r42. With a FTP-client I am connecting to the target
+and transfering the blob file to my host machine.
+
+The command to convert a blob file to source file.
+`~/linux/scripts/dtc/dtc -I dtb -O dts -o output.dts am335x-boneblack-uboot-univ.dtb`
+
+And vice versa:
+`~/linux/scripts/dtc/dtc -I dts -O dtb -o am335x-boneblack-uboot-univ.dtb output.dts`
+
+Now that I have the source file I can start with excercise 7.3.

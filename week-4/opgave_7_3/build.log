@@ -1,0 +1,28 @@
+In the source file there are 4 leds specified.
+The led that I want to add is as follows.
+
+Because the blob file is direcly converted to a source file the values inside
+gpios are all hexadecimals.
+
+led6 {
+	label = "beaglebone:green:usr4";
+	gpios = <0x5a 0x13 0x0>;
+	default-state = "off";
+};
+
+The edited source file gets compiled to a blob file. The blob file in the BBB gets overridden by the new 
+blob file. After the BBB is restarted the BBB now started with the new device tree blob file.
+
+By entering the following command I can check whether the led is added or not `ls /sys/class/leds`.
+
+The outcome:
+beaglebone:green:usr0  beaglebone:green:usr2  beaglebone:green:usr4
+beaglebone:green:usr1  beaglebone:green:usr3
+
+The last one is the led I have created.
+
+By entering the command `echo 1 > /sys/class/leds/beaglebone:green:usr4/brightness` I turn on the led.
+And with the command `echo 0 > /sys/class/leds/beaglebone:green:usr4/brightness` the leds gets turned off.
+
+The command to compile the dtb is: `~/linux/scripts/dtc/dtc -I dts -O dtb -o am335x-boneblack-uboot-univ.dtb output.dts
+
