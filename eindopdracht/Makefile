@@ -14,6 +14,7 @@ clean:
 
 install:
 	sudo insmod $(device_name).ko
+	sudo chmod 666 /sys/bus/i2c/drivers/stm32_driver/1-003e/myparam
 
 uninstall:
 	sudo rmmod $(device_name)
